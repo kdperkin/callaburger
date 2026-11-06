@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sign in · Call a Burger</title>
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" href="logo.svg" type="image/svg+xml" />
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#14110f" />
+<meta name="description" content="Type a script, pick a male or female voice, and we make the call — with a live transcript in Telegram. $1/minute, pay with crypto." />
+<!-- Link previews (Telegram, iMessage, X, Facebook). __BASE__ is filled in by the server with your site address. -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Call a Burger" />
+<meta property="og:title" content="Call a Burger" />
+<meta property="og:description" content="Type a script. Pick a voice. We make the call — live transcript in Telegram." />
+<meta property="og:url" content="__BASE__/" />
+<meta property="og:image" content="__BASE__/social.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Call a Burger logo: a burger on a ringing phone" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="__BASE__/social.jpg" />
+<style>
+  :root { --bg: #14110f; --panel: #1e1a17; --line: #352d27; --field: #120f0d; --text: #fbf3ea; --muted: #a8998b;
+    --accent: #ff7a1a; --accent-2: #e8650a; --ok: #4cbf4a; --bad: #ff5a4a; --tg: #2aabee; --cheese: #ffd23f; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    display: flex; flex-direction: column; align-items: center; padding: 32px 16px; }
+  [hidden] { display: none !important; }
+  a { color: var(--accent); }
+  .brand { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--text); margin-bottom: 18px; }
+  .brand svg { width: 84px; height: 84px; }
+  .brand h1 { margin: 6px 0 0; font-size: 28px; letter-spacing: -.02em; }
+  .brand h1 span { color: var(--accent); }
+  .tagline { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  .card { width: 100%; max-width: 400px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--field); border: 1px solid var(--line); border-radius: 12px; padding: 4px; margin-bottom: 6px; }
+  .tabs button { margin: 0; padding: 10px; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 600; }
+  .tabs button:hover { background: rgba(255,255,255,.04); }
+  .tabs button.active { background: var(--accent); color: #1a0d03; }
+  .reason { font-size: 14px; color: var(--muted); text-align: center; margin: 12px 0 0; }
+  .alert { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; border: 1px solid rgba(255,90,74,.5); background: rgba(255,90,74,.08); color: #ffb3aa; }
+  label { display: block; font-weight: 600; font-size: 12px; margin: 16px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  input { width: 100%; background: var(--field); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font: inherit; }
+  input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  input.bad { border-color: var(--bad); }
+  .pw { position: relative; }
+  .pw input { padding-right: 70px; }
+  .pw button { position: absolute; right: 6px; top: 6px; width: auto; margin: 0; padding: 7px 10px; font-size: 13px; background: transparent; color: var(--muted); border: 0; }
+  .pw button:hover { color: var(--text); background: transparent; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+  .captcha { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 18px; min-height: 65px; }
+  .cap-wait { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .cap-err { width: 100%; text-align: center; font-size: 13px; color: #ffb3aa; padding: 10px 12px; border: 1px dashed rgba(255,90,74,.5); border-radius: 10px; }
+  .cap-err button { width: auto; margin: 8px 0 0; padding: 7px 14px; font-size: 13px; background: transparent; color: var(--text); border: 1px solid var(--line); }
+  button { width: 100%; margin-top: 18px; padding: 13px; border: 0; border-radius: 10px; background: var(--accent); color: #1a0d03;
+    font: 700 16px/1 system-ui, sans-serif; cursor: pointer; }
+  button:hover { background: var(--accent-2); }
+  button:disabled { opacity: .5; cursor: default; }
+  .msg { margin-top: 12px; font-size: 14px; min-height: 20px; text-align: center; }
+  .msg.err { color: var(--bad); } .msg.ok { color: var(--ok); }
+  .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin: 18px 0 0; }
+  .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .tg { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; padding: 12px; border-radius: 10px; background: transparent; border: 1px solid var(--tg);
+    color: var(--tg); font-weight: 600; text-decoration: none; }
+  .tg:hover { background: rgba(42,171,238,.1); }
+  .tg svg { width: 18px; height: 18px; }
+  .back { margin-top: 18px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <a class="brand" href="./" aria-label="Call a Burger home">
+    <svg viewBox="0 0 128 128" role="img" aria-hidden="true"><path d="M96 30a26 26 0 0 1 0 36" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round"/><path d="M106 20a40 40 0 0 1 0 56" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round" opacity=".55"/><rect x="24" y="8" width="64" height="112" rx="14" fill="#1d1f27" stroke="#ff7a1a" stroke-width="4"/><rect x="31" y="20" width="50" height="86" rx="6" fill="#fff4e3"/><rect x="48" y="12" width="16" height="3.5" rx="1.75" fill="#3a3e4c"/><circle cx="56" cy="113" r="3" fill="#3a3e4c"/><g transform="translate(56 64)"><path d="M-20 -6c0-12 9-19 20-19s20 7 20 19z" fill="#f2a43a"/><path d="M-20 -6c0-12 9-19 20-19s20 7 20 19z" fill="none" stroke="#c97a1e" stroke-width="1.5"/><g fill="#fff6dc"><ellipse cx="-8" cy="-16" rx="2" ry="1.1" transform="rotate(-20 -8 -16)"/><ellipse cx="2" cy="-19" rx="2" ry="1.1"/><ellipse cx="10" cy="-13" rx="2" ry="1.1" transform="rotate(25 10 -13)"/><ellipse cx="-2" cy="-11" rx="2" ry="1.1" transform="rotate(10 -2 -11)"/></g><path d="M-22 -6q3.7 4 7.3 0t7.4 0 7.3 0 7.4 0 7.3 0 7.3 0v2h-44z" fill="#4cbf4a"/><path d="M-20 -2h40l-6 6-4-4-6 7-5-7-6 6-4-5-5 4z" fill="#ffd23f"/><rect x="-21" y="1" width="42" height="9" rx="4.5" fill="#6b3a1f"/><path d="M-20 11h40v3a5 5 0 0 1-5 5h-30a5 5 0 0 1-5-5z" fill="#e8952f"/></g></svg>
+    <h1>Call a <span>Burger</span></h1>
+    <p class="tagline">Type a script. Pick a voice. We make the call.</p>
+  </a>
+
+  <div class="card">
+    <div class="tabs" role="tablist">
+      <button type="button" id="tabUp" role="tab">Create account</button>
+      <button type="button" id="tabIn" role="tab">Sign in</button>
+    </div>
+    <p class="reason" id="reason" hidden></p>
+    <div class="alert" id="offline" hidden>Can't reach Call a Burger right now. Check your connection, then refresh this page.</div>
+
+    <form id="form" novalidate>
+      <label for="email">Email</label>
+      <input id="email" type="email" inputmode="email" required autocomplete="email" autocapitalize="off" spellcheck="false" />
+
+      <label for="password">Password</label>
+      <div class="pw">
+        <input id="password" type="password" required minlength="8" autocomplete="new-password" />
+        <button type="button" id="showPw" aria-label="Show password">Show</button>
+      </div>
+      <div class="hint" id="pwHint">At least 8 characters.</div>
+      <div class="hint" id="forgot" hidden>Forgot your password? If you connected Telegram, use <b>Continue with Telegram</b> below.</div>
+
+      <div id="upFields">
+        <label for="callerName">Your name or business</label>
+        <input id="callerName" type="text" maxlength="60" placeholder="e.g. Hickory Auto Detail" autocomplete="organization" />
+        <div class="hint">Calls open with “Hello, this is an automated call from <b id="namePreview">…</b>.”</div>
+      </div>
+
+      <div class="captcha" id="captchaBox" aria-live="polite">
+        <div id="captcha"></div>
+        <div class="cap-wait" id="capWait"><span class="spin"></span>Loading security check…</div>
+        <div class="cap-err" id="capErr" hidden>
+          The security check didn't load. Ad blockers and privacy extensions often block it — allow this site, then
+          <br /><button type="button" id="capRetry">Try again</button>
+        </div>
+      </div>
+
+      <button id="submit" type="submit">Create account</button>
+      <div id="msg" class="msg" role="alert"></div>
+    </form>
+
+    <div id="tgWrap">
+      <div class="or">or</div>
+      <a class="tg" id="tgLink" href="./?signin=telegram">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.9 4.3 18.7 19.4c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.1l-4.8-1.5c-1-.3-1.1-1 .2-1.5L20.6 2.8c.9-.3 1.6.2 1.3 1.5z"/></svg>
+        Continue with Telegram
+      </a>
+    </div>
+  </div>
+
+  <a class="back" href="./">← Back to Call a Burger</a>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const q = new URLSearchParams(location.search);
+  const next = q.get('next') || ''; // what to do after signing in: '', 'topup' or 'call'
+  const goNext = () => location.replace(next ? './?open=' + encodeURIComponent(next) : './');
+  let mode = q.get('mode') === 'signin' ? 'signin' : 'signup';
+  let siteKey = null, widgetId = null, captchaToken = '', capTimer = null, online = true;
+
+  if (q.get('reason')) { $('reason').textContent = q.get('reason'); $('reason').hidden = false; }
+  if (next) $('tgLink').href = './?signin=telegram&open=' + encodeURIComponent(next);
+
+  function setMode(m) {
+    mode = m;
+    $('tabUp').classList.toggle('active', m === 'signup');
+    $('tabIn').classList.toggle('active', m === 'signin');
+    $('tabUp').setAttribute('aria-selected', m === 'signup');
+    $('tabIn').setAttribute('aria-selected', m === 'signin');
+    $('upFields').hidden = m !== 'signup';
+    $('pwHint').hidden = m !== 'signup';
+    $('forgot').hidden = m !== 'signin' || $('tgWrap').hidden;
+    $('submit').textContent = m === 'signup' ? 'Create account' : 'Sign in';
+    $('password').autocomplete = m === 'signup' ? 'new-password' : 'current-password';
+    $('msg').textContent = '';
+    document.title = (m === 'signup' ? 'Create account' : 'Sign in') + ' · Call a Burger';
+    const nq = new URLSearchParams(location.search); nq.set('mode', m);
+    history.replaceState(null, '', '?' + nq);
+  }
+  $('tabUp').onclick = () => setMode('signup');
+  $('tabIn').onclick = () => setMode('signin');
+  setMode(mode);
+
+  $('showPw').onclick = () => {
+    const p = $('password'); const show = p.type === 'password';
+    p.type = show ? 'text' : 'password'; $('showPw').textContent = show ? 'Hide' : 'Show';
+    $('showPw').setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  };
+  $('callerName').addEventListener('input', () => ($('namePreview').textContent = $('callerName').value.trim() || '…'));
+  ['email', 'password', 'callerName'].forEach((i) => $(i).addEventListener('input', () => $(i).classList.remove('bad')));
+
+  // ----- captcha (Cloudflare Turnstile): load it ourselves so a blocked script shows a clear message -----
+  function captchaState(s) {
+    $('capWait').hidden = s !== 'loading';
+    $('capErr').hidden = s !== 'error';
+    $('captcha').hidden = s === 'error';
+  }
+  function captchaFailed() { clearTimeout(capTimer); captchaToken = ''; captchaState('error'); }
+  function renderCaptcha() {
+    if (!siteKey || !window.turnstile) return;
+    clearTimeout(capTimer);
+    $('captcha').innerHTML = ''; widgetId = null;
+    try {
+      widgetId = turnstile.render('#captcha', {
+        sitekey: siteKey,
+        theme: 'dark',
+        callback: (t) => { captchaToken = t; $('msg').textContent = ''; },
+        'expired-callback': () => { captchaToken = ''; },
+        'error-callback': () => { captchaFailed(); return true; },
+      });
+      captchaState('ready');
+    } catch (e) { captchaFailed(); }
+  }
+  function loadCaptcha() {
+    captchaState('loading');
+    if (window.turnstile) return renderCaptcha();
+    document.querySelectorAll('script[data-turnstile]').forEach((s) => s.remove());
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true; s.dataset.turnstile = '1';
+    s.onload = renderCaptcha;
+    s.onerror = captchaFailed;
+    document.head.append(s);
+    capTimer = setTimeout(() => { if (!window.turnstile) captchaFailed(); }, 12000);
+  }
+  $('capRetry').onclick = () => (siteKey ? loadCaptcha() : init());
+  function resetCaptcha() {
+    captchaToken = '';
+    if (window.turnstile && widgetId !== null) { try { turnstile.reset(widgetId); } catch { renderCaptcha(); } }
+  }
+
+  // ----- start: settings from the server -----
+  async function init() {
+    try {
+      const r = await fetch('/api/config');
+      if (!r.ok) throw new Error();
+      const cfg = await r.json();
+      online = true; $('offline').hidden = true; $('submit').disabled = false; $('captchaBox').hidden = false;
+      siteKey = cfg.turnstileSiteKey;
+      if (!cfg.botUsername) $('tgWrap').hidden = true;
+      setMode(mode);
+      loadCaptcha();
+      // Already signed in? Go straight to the app.
+      fetch('/api/me').then((res) => { if (res.ok) goNext(); }).catch(() => {});
+    } catch {
+      online = false; $('offline').hidden = false; $('submit').disabled = true;
+      $('captchaBox').hidden = true; $('tgWrap').hidden = true;
+    }
+  }
+  init();
+
+  // ----- submit -----
+  $('form').onsubmit = async (e) => {
+    e.preventDefault();
+    const msg = $('msg'); msg.className = 'msg'; msg.textContent = '';
+    const email = $('email').value.trim(), password = $('password').value, callerName = $('callerName').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Enter a valid email.', 'email');
+    if (!password) return fail('Enter your password.', 'password');
+    if (mode === 'signup' && password.length < 8) return fail('Password must be at least 8 characters.', 'password');
+    if (mode === 'signup' && !callerName) return fail('Enter your name or business.', 'callerName');
+    if (!$('capErr').hidden) return fail('The security check needs to load first — tap Try again.');
+    if (!captchaToken) return fail('Please complete the security check.');
+
+    $('submit').disabled = true;
+    $('submit').textContent = mode === 'signup' ? 'Creating account…' : 'Signing in…';
+    try {
+      const body = mode === 'signup' ? { email, password, callerName, captcha: captchaToken } : { email, password, captcha: captchaToken };
+      const r = await fetch(mode === 'signup' ? '/api/signup' : '/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (r.status === 409) setMode('signin'); // email taken → switch to Sign in, then show why
+        throw new Error(data.error || 'Something went wrong. Try again.');
+      }
+      try { sessionStorage.setItem('cab_token', data.token); } catch {}
+      msg.className = 'msg ok'; msg.textContent = mode === 'signup' ? 'Account created! Taking you in…' : 'Signed in! Taking you in…';
+      goNext();
+    } catch (err) {
+      fail(err.message === 'Failed to fetch' ? "Can't reach Call a Burger right now. Check your connection and try again." : err.message);
+      resetCaptcha(); // each pass of the security check works once
+      $('submit').disabled = false;
+      $('submit').textContent = mode === 'signup' ? 'Create account' : 'Sign in';
+    }
+  };
+  function fail(text, field) {
+    $('msg').className = 'msg err'; $('msg').textContent = text;
+    if (field) { $(field).classList.add('bad'); $(field).focus(); }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Call a Burger</title>
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" href="logo.svg" type="image/svg+xml" />
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#14110f" />
+<meta name="description" content="Type a script, pick a male or female voice, and we make the call — with a live transcript in Telegram. $1/minute, pay with crypto." />
+<!-- Link previews (Telegram, iMessage, X, Facebook). __BASE__ is filled in by the server with your site address. -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Call a Burger" />
+<meta property="og:title" content="Call a Burger" />
+<meta property="og:description" content="Type a script. Pick a voice. We make the call — live transcript in Telegram." />
+<meta property="og:url" content="__BASE__/" />
+<meta property="og:image" content="__BASE__/social.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Call a Burger logo: a burger on a ringing phone" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="__BASE__/social.jpg" />
+<!-- Lets the page run as a Telegram Mini App. Harmless in a normal browser. -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #14110f; --panel: #1e1a17; --line: #352d27; --field: #120f0d; --text: #fbf3ea; --muted: #a8998b;
+    --accent: #ff7a1a; --accent-2: #e8650a; --cheese: #ffd23f; --ok: #4cbf4a; --bad: #ff5a4a; --tg: #2aabee;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  [hidden] { display: none !important; }
+  header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; max-width: 1040px; margin: 0 auto; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  header .logo { width: 40px; height: 40px; flex: none; }
+  header .home { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  header .brand { font-weight: 800; font-size: 21px; letter-spacing: -.02em; white-space: nowrap; }
+  header .brand span { color: var(--accent); }
+  header .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: var(--line); flex: none; }
+  .uname { color: var(--muted); font-size: 13px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 560px) { .uname, header .brand { display: none; } }
+  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; font-size: 13px; padding: 0; width: auto; margin: 0; }
+  .link:hover { color: var(--text); background: none; }
+  .hero { max-width: 1040px; margin: 4px auto 18px; padding: 0 16px; }
+  .hero h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: -.02em; line-height: 1.15; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { margin: 0; color: var(--muted); max-width: 580px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px 40px; display: grid; gap: 20px; grid-template-columns: 1fr; }
+  @media (min-width: 880px) { .wrap { grid-template-columns: 1.1fr .9fr; } }
+  .side { display: grid; gap: 20px; align-content: start; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  h2 { font-size: 16px; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .sub { color: var(--muted); margin: -6px 0 6px; font-size: 14px; }
+  label { display: block; font-weight: 600; font-size: 12px; margin: 16px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  input[type=tel], input[type=number], input[type=text], textarea {
+    width: 100%; background: var(--field); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font: inherit;
+  }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  textarea { min-height: 170px; resize: vertical; }
+  .count { text-align: right; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .est { float: left; }
+  .seg { display: flex; gap: 8px; }
+  .seg input { display: none; }
+  .seg label { flex: 1; margin: 0; text-transform: none; letter-spacing: 0; font-size: 15px; color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px; padding: 11px; text-align: center; cursor: pointer; background: var(--field); }
+  .seg input:checked + label { border-color: var(--accent); background: rgba(255,122,26,.14); }
+  .consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .consent input { margin-top: 4px; accent-color: var(--accent); }
+  .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  button { margin-top: 20px; width: 100%; background: var(--accent); color: #1a0d03; border: 0; border-radius: 10px;
+    padding: 13px; font: 700 16px/1 system-ui, sans-serif; cursor: pointer; }
+  button:hover { background: var(--accent-2); }
+  button:disabled { opacity: .5; cursor: default; }
+  button.tg { background: var(--tg); color: #fff; }
+  button.tg:hover { background: #1e98d8; }
+  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  button.gold { background: var(--cheese); color: #1a1203; }
+  button.gold:hover { background: #f0c22b; }
+  button.small { width: auto; margin: 0; padding: 8px 12px; font-size: 14px; }
+  .msg { margin-top: 12px; font-size: 14px; min-height: 20px; }
+  .msg.err { color: var(--bad); } .msg.ok { color: var(--ok); }
+  .pill { font-size: 12px; padding: 3px 10px; border-radius: 99px; background: var(--field); border: 1px solid var(--line); color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .pill.live { color: var(--ok); border-color: var(--ok); }
+  .pill.on { color: var(--tg); border-color: var(--tg); }
+  .balpill { color: var(--cheese); border-color: rgba(255,210,63,.45); font-weight: 700; font-size: 13px; padding: 5px 12px; cursor: pointer; }
+  .tx { max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+  .line { padding: 9px 12px; border-radius: 10px; background: var(--field); border: 1px solid var(--line); font-size: 14px; }
+  .line b { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .line.rec { border-color: rgba(76,191,74,.45); }
+  .line.partial { opacity: .7; font-style: italic; border-style: dashed; }
+  button.livebtn { width: auto; margin: 0; padding: 5px 10px; font-size: 12px; background: rgba(255,90,74,.14); color: #ff8a7a; border: 1px solid rgba(255,90,74,.5); }
+  button.livebtn:hover { background: rgba(255,90,74,.24); }
+  .livecard { max-width: 560px; display: flex; flex-direction: column; height: min(720px, calc(100vh - 32px)); }
+  .livehead { text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+  .liveTop { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 18px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+  .dot.on { background: #ff5a4a; box-shadow: 0 0 0 0 rgba(255,90,74,.6); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,90,74,.6); } 70% { box-shadow: 0 0 0 10px rgba(255,90,74,0); } 100% { box-shadow: 0 0 0 0 rgba(255,90,74,0); } }
+  .liveTo { font-size: 22px; font-weight: 800; letter-spacing: -.01em; margin: 4px 0 8px; }
+  .liveMeta { display: flex; gap: 8px; justify-content: center; align-items: center; }
+  .timer { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text); font-size: 15px; }
+  .livetx { flex: 1; max-height: none; min-height: 120px; }
+  .empty { color: var(--muted); font-size: 14px; }
+  .chats { display: grid; gap: 8px; margin-top: 6px; }
+  .chat { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: var(--field); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
+  .linkbox { margin-top: 14px; padding: 14px; border: 1px dashed var(--tg); border-radius: 12px; font-size: 14px; }
+  .linkbox a { color: var(--tg); font-weight: 600; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .history { font-size: 13px; color: var(--muted); }
+  .history div { padding: 7px 0; border-top: 1px solid var(--line); cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+  .history div:hover { color: var(--text); }
+  .lock { font-size: 13px; color: var(--muted); text-align: center; margin-top: 8px; }
+  .numbox { margin-top: 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); font-size: 14px; }
+  .acrow { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .acrow input { width: 90px; padding: 7px 10px; }
+  .banner { max-width: 1040px; margin: 0 auto 16px; padding: 0 16px; }
+  .banner div { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--cheese); background: rgba(255,210,63,.08); font-size: 14px; }
+  /* pop-ups */
+  .overlay { position: fixed; inset: 0; background: rgba(8,6,5,.72); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .modal { width: 100%; max-width: 440px; position: relative; max-height: calc(100vh - 32px); overflow-y: auto; }
+  .modal .close { position: absolute; top: 10px; right: 12px; width: auto; margin: 0; padding: 4px 9px; background: transparent; color: var(--muted); font-size: 22px; }
+  .modal .close:hover { color: var(--text); background: transparent; }
+  .mhead { text-align: center; margin-bottom: 14px; }
+  .mhead svg { width: 64px; height: 64px; }
+  .mhead svg.sm { width: 44px; height: 44px; }
+  .mhead h3 { margin: 6px 0 2px; font-size: 20px; }
+  .mhead p { margin: 0; color: var(--muted); font-size: 14px; }
+  #tgWidget { display: flex; justify-content: center; min-height: 48px; margin: 18px 0 6px; }
+  .or { text-align: center; color: var(--muted); font-size: 13px; margin: 10px 0; }
+  .bal { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; text-align: center; }
+  .bal small { display: block; font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
+  .amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .amounts button, .provs button { margin: 0; padding: 10px 6px; font-size: 15px; background: var(--field); color: var(--text); border: 1px solid var(--line); }
+  .amounts button.sel, .provs button.sel { border-color: var(--cheese); background: rgba(255,210,63,.12); }
+  .provs { display: grid; gap: 8px; }
+  .provs button { text-align: left; padding: 11px 12px; font-weight: 600; }
+  .provs button small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .solpay { margin-top: 16px; padding: 14px; border: 1px solid #ab9ff2; border-radius: 12px; background: rgba(171,159,242,.08); }
+  .solpay.btc { border-color: #f7931a; background: rgba(247,147,26,.07); }
+  .solpay.btc .btnlink { background: #f7931a; color: #1f1203; }
+  .solhead { text-align: center; font-size: 15px; margin-bottom: 10px; }
+  .solpay img { display: block; width: 220px; height: 220px; margin: 0 auto 10px; border-radius: 10px; background: #fff; }
+  .btnlink { display: block; text-align: center; margin-top: 12px; padding: 12px; border-radius: 10px; background: #ab9ff2; color: #1c1530; font-weight: 700; text-decoration: none; }
+  .solrow { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .solrow code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); background: var(--field); padding: 6px 8px; border-radius: 8px; }
+  .ledger { margin-top: 16px; font-size: 13px; color: var(--muted); }
+  .ledger div { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .ledger .plus { color: var(--ok); }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="home" href="./" aria-label="Call a Burger home"><svg class="logo" viewBox="0 0 128 128" role="img" aria-hidden="true"><path d="M96 30a26 26 0 0 1 0 36" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round"/><path d="M106 20a40 40 0 0 1 0 56" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round" opacity=".55"/><rect x="24" y="8" width="64" height="112" rx="14" fill="#1d1f27" stroke="#ff7a1a" stroke-width="4"/><rect x="31" y="20" width="50" height="86" rx="6" fill="#fff4e3"/><rect x="48" y="12" width="16" height="3.5" rx="1.75" fill="#3a3e4c"/><circle cx="56" cy="113" r="3" fill="#3a3e4c"/><g transform="translate(56 64)"><path d="M-20 -6c0-12 9-19 20-19s20 7 20 19z" fill="#f2a43a"/><path d="M-20 -6c0-12 9-19 20-19s20 7 20 19z" fill="none" stroke="#c97a1e" stroke-width="1.5"/><g fill="#fff6dc"><ellipse cx="-8" cy="-16" rx="2" ry="1.1" transform="rotate(-20 -8 -16)"/><ellipse cx="2" cy="-19" rx="2" ry="1.1"/><ellipse cx="10" cy="-13" rx="2" ry="1.1" transform="rotate(25 10 -13)"/><ellipse cx="-2" cy="-11" rx="2" ry="1.1" transform="rotate(10 -2 -11)"/></g><path d="M-22 -6q3.7 4 7.3 0t7.4 0 7.3 0 7.4 0 7.3 0 7.3 0v2h-44z" fill="#4cbf4a"/><path d="M-20 -2h40l-6 6-4-4-6 7-5-7-6 6-4-5-5 4z" fill="#ffd23f"/><rect x="-21" y="1" width="42" height="9" rx="4.5" fill="#6b3a1f"/><path d="M-20 11h40v3a5 5 0 0 1-5 5h-30a5 5 0 0 1-5-5z" fill="#e8952f"/></g></svg><div class="brand">Call a <span>Burger</span></div></a>
+  <div class="right">
+    <span class="pill balpill" id="hdrBal" hidden title="Your balance"></span>
+    <button class="gold small" id="topupBtn" type="button">💰 Top up</button>
+    <button class="ghost small" id="signInBtn" type="button">Sign in</button>
+    <button class="small" id="createBtn" type="button">Create account</button>
+    <span id="userBits" hidden style="display:flex;align-items:center;gap:8px">
+      <img class="avatar" id="avatar" alt="" hidden />
+      <span class="uname" id="uname"></span>
+      <button class="link" id="logout" type="button">Sign out</button>
+    </span>
+  </div>
+</header>
+
+<div class="banner" id="banner" hidden><div id="bannerText"></div></div>
+
+<section class="hero" id="hero">
+  <h1>Write it. Pick a voice. <span>We make the call.</span></h1>
+  <p>Type what you need said, choose a male or female voice, and follow the conversation live in Telegram. <b id="heroRate"></b></p>
+</section>
+
+<div class="wrap">
+  <div class="card">
+    <h2>New call <span class="pill" id="quota">Free to draft</span></h2>
+    <form id="callForm">
+      <label for="to">Phone number</label>
+      <input id="to" type="tel" placeholder="+18285551234" required autocomplete="off" />
+
+      <label for="script">Script</label>
+      <textarea id="script" placeholder="Hi, this is a reminder that your order is ready for pickup…" required maxlength="3500"></textarea>
+      <div class="count"><span class="est" id="est"></span><span id="n">0</span> / 3500</div>
+
+      <label>Voice</label>
+      <div class="seg">
+        <input type="radio" name="voice" id="vf" value="female" checked /><label for="vf">Female</label>
+        <input type="radio" name="voice" id="vm" value="male" /><label for="vm">Male</label>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label for="listen">Listen after script (sec)</label>
+          <input id="listen" type="number" min="0" max="60" value="15" />
+        </div>
+      </div>
+
+      <div class="numbox" id="numBox" hidden>
+        <div id="numHas" hidden>📱 Calls come from <b id="numPretty"></b> <span class="pill" id="numStatus"></span><div class="note" style="margin-top:4px" id="numRenew"></div></div>
+        <div id="numNone">
+          <div>📱 <b>Your own phone number</b> is set up as soon as you top up<span id="numFee"></span>.</div>
+          <div class="acrow"><label for="areaCode" style="margin:0">Preferred area code</label>
+            <input id="areaCode" type="text" inputmode="numeric" maxlength="3" placeholder="828" />
+          </div>
+        </div>
+      </div>
+
+      <div class="note">Calls open with: “Hello, this is an automated call from <b id="fromName">your name</b>.” <button type="button" class="link" id="editName" hidden>Change</button></div>
+
+      <div class="consent">
+        <input type="checkbox" id="consent" />
+        <span>This person has agreed to receive this call.</span>
+      </div>
+
+      <button id="go" type="submit">🍔 Place call</button>
+      <div class="lock" id="goLock">🔒 Create an account and top up to place calls — your script is kept.</div>
+      <div id="callMsg" class="msg"></div>
+    </form>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <h2>Telegram <span class="pill" id="tgPill">Not connected</span></h2>
+      <p class="sub" id="tgSub">Create an account, then connect Telegram to get your call transcripts there live.</p>
+      <div class="chats" id="chats"></div>
+      <button class="tg" id="connectTg" type="button" hidden>Connect Telegram</button>
+      <button class="ghost" id="addGroup" type="button" hidden>👥 Also send to a group</button>
+      <div id="linkBox" class="linkbox" hidden>
+        <a id="linkGroup" target="_blank" rel="noopener">Open Telegram →</a>
+        <div class="note" id="linkNote">The link expires in 15 minutes.</div>
+      </div>
+      <div id="tgMsg" class="msg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Conversation <span style="display:flex;gap:8px;align-items:center"><span id="status" class="pill">Idle</span><button class="livebtn small" id="liveBtn" type="button" hidden>🔴 Live call</button></span></h2>
+      <div id="tx" class="tx"><div class="empty">Place a call to see the transcript here and in Telegram.</div></div>
+      <div class="note" id="keepNote">Only your most recent conversation is kept here, for 1 hour after the call ends. Telegram keeps the full transcript and recording.</div>
+    </div>
+
+    <div class="card">
+      <h2>Recent calls</h2>
+      <div class="history" id="history"><div class="empty" style="cursor:default;border:0">Sign in to see your calls.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Live call screen ===== -->
+<div class="overlay live" id="liveView" hidden>
+  <div class="card modal livecard" role="dialog" aria-modal="true" aria-labelledby="liveTitle">
+    <button class="close" data-close="liveView" type="button" aria-label="Close">×</button>
+    <div class="livehead">
+      <div class="liveTop"><span class="dot" id="liveDot"></span><span id="liveTitle">Live call</span></div>
+      <div class="liveTo" id="liveTo"></div>
+      <div class="liveMeta"><span id="liveStatus" class="pill">Dialing</span><span id="liveTimer" class="timer">0:00</span><span id="liveRec" class="pill" hidden>🎙 Recording</span></div>
+    </div>
+    <div id="liveTx" class="tx livetx"></div>
+    <div class="note" id="liveNote"></div>
+  </div>
+</div>
+
+<!-- ===== Top up pop-up ===== -->
+<div class="overlay" id="topupView" hidden>
+  <div class="card modal" role="dialog" aria-modal="true" aria-labelledby="tuTitle">
+    <button class="close" data-close="topupView" type="button" aria-label="Close">×</button>
+    <div class="mhead"><svg class="sm" viewBox="0 0 128 128" role="img" aria-hidden="true"><path d="M96 30a26 26 0 0 1 0 36" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round"/><path d="M106 20a40 40 0 0 1 0 56" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round" opacity=".55"/><rect x="24" y="8" width="64" height="112" rx="14" fill="#1d1f27" stroke="#ff7a1a" stroke-width="4"/><rect x="31" y="20" width="50" height="86" rx="6" fill="#fff4e3"/><rect x="48" y="12" width="16" height="3.5" rx="1.75" fill="#3a3e4c"/><circle cx="56" cy="113" r="3" fill="#3a3e4c"/><g transform="translate(56 64)"><path d="M-20 -6c0-12 9-19 20-19s20 7 20 19z" fill="#f2a43a"/><path d="M-20 -6c0-12 9-19 20-19s20 7 20 19z" fill="none" stroke="#c97a1e" stroke-width="1.5"/><g fill="#fff6dc"><ellipse cx="-8" cy="-16" rx="2" ry="1.1" transform="rotate(-20 -8 -16)"/><ellipse cx="2" cy="-19" rx="2" ry="1.1"/><ellipse cx="10" cy="-13" rx="2" ry="1.1" transform="rotate(25 10 -13)"/><ellipse cx="-2" cy="-11" rx="2" ry="1.1" transform="rotate(10 -2 -11)"/></g><path d="M-22 -6q3.7 4 7.3 0t7.4 0 7.3 0 7.4 0 7.3 0 7.3 0v2h-44z" fill="#4cbf4a"/><path d="M-20 -2h40l-6 6-4-4-6 7-5-7-6 6-4-5-5 4z" fill="#ffd23f"/><rect x="-21" y="1" width="42" height="9" rx="4.5" fill="#6b3a1f"/><path d="M-20 11h40v3a5 5 0 0 1-5 5h-30a5 5 0 0 1-5-5z" fill="#e8952f"/></g></svg><h3 id="tuTitle">Top up</h3><p id="tuReason">Load your balance with crypto. Calls are <b id="tuRate"></b>/min.</p></div>
+    <div class="bal" id="balBig">$0.00<small></small></div>
+    <label>Amount</label>
+    <div class="amounts" id="amounts"></div>
+    <label for="customAmt">Or enter an amount (USD)</label>
+    <input id="customAmt" type="number" min="10" step="1" placeholder="e.g. 40" />
+    <label>Pay with</label>
+    <div class="provs" id="provs"></div>
+    <button class="gold" id="payBtn" type="button">Check out</button>
+    <div class="solpay" id="solPay" hidden>
+      <div class="solhead">Send exactly <b id="solAmt"></b> <b id="solUnit">USDC</b> <span id="solNet">on Solana</span></div>
+      <img id="solQr" alt="Payment QR code" />
+      <div class="note" style="text-align:center;margin-top:0" id="solScan">Scan with Phantom on your phone, or tap below on this device.</div>
+      <a class="btnlink" id="solOpen">👻 Open in Phantom</a>
+      <div class="solrow" id="amtRow" hidden><span>Amount</span><code id="solAmt2"></code><button type="button" class="ghost small" id="amtCopy">Copy</button></div>
+      <div class="solrow"><span>To</span><code id="solAddr"></code><button type="button" class="ghost small" id="solCopy">Copy</button></div>
+      <div class="note" id="solNote">Use the QR or button so the payment is matched to you automatically. If you send manually, your balance won't update by itself.</div>
+    </div>
+    <div id="payMsg" class="msg"></div>
+    <div class="ledger" id="ledger"></div>
+  </div>
+</div>
+
+<!-- ===== Sign in with Telegram pop-up ===== -->
+<div class="overlay" id="authView" hidden>
+  <div class="card modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button class="close" data-close="authView" type="button" aria-label="Close">×</button>
+    <div class="mhead">
+      <svg class="" viewBox="0 0 128 128" role="img" aria-hidden="true"><path d="M96 30a26 26 0 0 1 0 36" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round"/><path d="M106 20a40 40 0 0 1 0 56" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round" opacity=".55"/><rect x="24" y="8" width="64" height="112" rx="14" fill="#1d1f27" stroke="#ff7a1a" stroke-width="4"/><rect x="31" y="20" width="50" height="86" rx="6" fill="#fff4e3"/><rect x="48" y="12" width="16" height="3.5" rx="1.75" fill="#3a3e4c"/><circle cx="56" cy="113" r="3" fill="#3a3e4c"/><g transform="translate(56 64)"><path d="M-20 -6c0-12 9-19 20-19s20 7 20 19z" fill="#f2a43a"/><path d="M-20 -6c0-12 9-19 20-19s20 7 20 19z" fill="none" stroke="#c97a1e" stroke-width="1.5"/><g fill="#fff6dc"><ellipse cx="-8" cy="-16" rx="2" ry="1.1" transform="rotate(-20 -8 -16)"/><ellipse cx="2" cy="-19" rx="2" ry="1.1"/><ellipse cx="10" cy="-13" rx="2" ry="1.1" transform="rotate(25 10 -13)"/><ellipse cx="-2" cy="-11" rx="2" ry="1.1" transform="rotate(10 -2 -11)"/></g><path d="M-22 -6q3.7 4 7.3 0t7.4 0 7.3 0 7.4 0 7.3 0 7.3 0v2h-44z" fill="#4cbf4a"/><path d="M-20 -2h40l-6 6-4-4-6 7-5-7-6 6-4-5-5 4z" fill="#ffd23f"/><rect x="-21" y="1" width="42" height="9" rx="4.5" fill="#6b3a1f"/><path d="M-20 11h40v3a5 5 0 0 1-5 5h-30a5 5 0 0 1-5-5z" fill="#e8952f"/></g></svg>
+      <h3 id="mTitle">Sign in with Telegram</h3>
+      <p id="mReason">No email or password — your Telegram is your account, and transcripts arrive there.</p>
+    </div>
+    <div id="tgWidget"></div>
+    <div class="or">or</div>
+    <button class="tg" id="openInTg" type="button" style="margin-top:0">Open Call a Burger in Telegram</button>
+    <div id="authMsg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const TG = window.Telegram && window.Telegram.WebApp;
+  const IN_TG = !!(TG && TG.initData); // running as a Mini App inside Telegram
+  let token = null;
+  try { token = sessionStorage.getItem('cab_token'); } catch {}
+
+  const api = async (url, body) => {
+    const headers = token ? { Authorization: 'Bearer ' + token } : {};
+    const opts = body === undefined ? { headers } : { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+    const r = await fetch(url, opts);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) { const e = new Error(data.error || 'Something went wrong'); e.status = r.status; e.data = data; throw e; }
+    return data;
+  };
+  const money = (c) => (c < 0 ? '-' : '') + '$' + (Math.abs(c) / 100).toFixed(2);
+  const LABEL = { queued: 'Queued', initiated: 'Dialing', ringing: 'Ringing', 'in-progress': 'Live', completed: 'Ended',
+    busy: 'Busy', 'no-answer': 'No answer', failed: 'Failed', canceled: 'Canceled' };
+  const DONE = ['completed', 'busy', 'no-answer', 'failed', 'canceled'];
+  let cfg = { pricePerMinuteCents: 100, topupPresetsCents: [], providers: [], minTopupCents: 1000, maxTopupCents: 100000, numberMonthlyFeeCents: 0 };
+  let me = null, pollTimer = null, linkPoll = null, afterAuth = null, selAmt = null, selProv = null;
+
+  // ----- pop-ups -----
+  function openModal(id) { $(id).hidden = false; }
+  function closeModal(id) { $(id).hidden = true; if (id === 'authView') afterAuth = null; }
+  document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = () => closeModal(b.dataset.close)));
+  document.querySelectorAll('.overlay').forEach((o) => o.addEventListener('click', (e) => { if (e.target === o) closeModal(o.id); }));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ['liveView', 'topupView', 'authView'].forEach((m) => !$(m).hidden && closeModal(m)); });
+
+  // ----- keep the draft across refreshes and checkout trips -----
+  const DRAFT_KEY = 'cab_draft';
+  function saveDraft() {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        to: $('to').value, script: $('script').value, listen: $('listen').value,
+        voice: document.querySelector('input[name=voice]:checked').value,
+      }));
+    } catch {}
+  }
+  function loadDraft() {
+    try {
+      const d = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
+      if (!d) return;
+      $('to').value = d.to || ''; $('script').value = d.script || ''; $('listen').value = d.listen || 15;
+      (d.voice === 'male' ? $('vm') : $('vf')).checked = true;
+      $('n').textContent = $('script').value.length;
+    } catch {}
+  }
+  $('callForm').addEventListener('input', saveDraft);
+  $('callForm').addEventListener('change', saveDraft);
+
+  // ----- Sign in with Telegram -----
+  function setSession(res) {
+    token = res.token; me = res.me;
+    try { sessionStorage.setItem('cab_token', token); } catch {}
+  }
+  // Website: Telegram's official login button calls this with the signed user data.
+  window.onTelegramAuth = async (user) => {
+    $('authMsg').className = 'msg'; $('authMsg').textContent = 'Signing you in…';
+    try {
+      setSession(await api('/api/auth/telegram', { widget: user }));
+      const next = afterAuth; closeModal('authView'); showSignedIn();
+      if (next) next();
+    } catch (err) { $('authMsg').className = 'msg err'; $('authMsg').textContent = err.message; }
+  };
+  // Sign-in lives on its own page (/login.html, with captcha). `next` says what to do when they come back.
+  function openAuth(reason, next = '', mode = 'signup') {
+    if (IN_TG) return; // inside Telegram we're signed in automatically
+    saveDraft();
+    const q = new URLSearchParams({ mode });
+    if (reason) q.set('reason', reason);
+    if (next) q.set('next', next);
+    location.href = '/login.html?' + q;
+  }
+  // After signing in, continue what they were doing.
+  function continueAfterAuth(next) {
+    if (next === 'topup') openTopup();
+    if (next === 'call') {
+      if (needsTopUp()) openTopup('Top up to place your first call.');
+      else { $('callMsg').className = 'msg ok'; $('callMsg').textContent = "You're signed in. Check the details, then press Place call."; }
+    }
+  }
+
+  // "Continue with Telegram" (from the login page): Telegram's official login button in a pop-up.
+  let widgetLoaded = false;
+  function openTelegramAuth(next = '') {
+    if (IN_TG) return;
+    $('mReason').textContent = 'Use your Telegram account — your call transcripts will arrive there.';
+    afterAuth = () => continueAfterAuth(next); $('authMsg').textContent = '';
+    if (!widgetLoaded && cfg.botUsername) {
+      const s = document.createElement('script');
+      s.src = 'https://telegram.org/js/telegram-widget.js?22'; s.async = true;
+      s.setAttribute('data-telegram-login', cfg.botUsername);
+      s.setAttribute('data-size', 'large'); s.setAttribute('data-radius', '10');
+      s.setAttribute('data-onauth', 'onTelegramAuth(user)');
+      s.setAttribute('data-request-access', 'write'); // lets the bot send them transcripts
+      $('tgWidget').append(s); widgetLoaded = true;
+    }
+    openModal('authView');
+  }
+  $('signInBtn').onclick = () => openAuth('', '', 'signin');
+  $('createBtn').onclick = () => openAuth('', '', 'signup');
+  $('openInTg').onclick = () => { if (cfg.botUsername) window.open(`https://t.me/${cfg.botUsername}?start=app`, '_blank'); };
+  $('logout').onclick = async () => {
+    await api('/api/logout', {}).catch(() => {});
+    try { sessionStorage.removeItem('cab_token'); sessionStorage.removeItem(DRAFT_KEY); } catch {}
+    location.href = '/';
+  };
+
+  // ----- signed-in vs guest UI -----
+  function renderMe() {
+    const signedIn = !!me;
+    $('signInBtn').hidden = signedIn || IN_TG; $('createBtn').hidden = signedIn || IN_TG; $('userBits').hidden = !signedIn;
+    $('logout').hidden = IN_TG; $('hdrBal').hidden = !signedIn;
+    $('hero').hidden = signedIn; $('editName').hidden = !signedIn;
+    $('numBox').hidden = !signedIn || !cfg.dedicatedNumbers;
+    $('addGroup').hidden = !signedIn; $('connectTg').hidden = !signedIn;
+    if (!signedIn) {
+      $('quota').textContent = 'Free to draft';
+      $('fromName').textContent = 'your name';
+      $('chats').innerHTML = '';
+      $('tgPill').textContent = 'Not connected'; $('tgPill').className = 'pill';
+      $('tgSub').textContent = 'Create an account, then connect Telegram to get your call transcripts there live.';
+      $('ledger').innerHTML = '';
+      $('balBig').innerHTML = `${money(cfg.pricePerMinuteCents)}<small>per minute · pay as you go</small>`;
+      updateCallButton();
+      return;
+    }
+    const bal = me.balanceCents || 0;
+    $('hdrBal').textContent = money(bal);
+    $('balBig').innerHTML = `${money(bal)}<small>≈ ${Math.floor(bal / cfg.pricePerMinuteCents)} min of calls</small>`;
+    $('uname').textContent = me.email || (me.username ? '@' + me.username : me.name);
+    if (me.photoUrl) { $('avatar').src = me.photoUrl; $('avatar').hidden = false; }
+    $('fromName').textContent = me.callerName;
+    $('quota').textContent = `${me.callsToday} / ${me.dailyLimit} today`;
+
+    const c = $('chats'); c.innerHTML = '';
+    me.telegram.forEach((t) => {
+      const d = document.createElement('div'); d.className = 'chat';
+      const s = document.createElement('span'); s.textContent = (t.type === 'private' ? '💬 ' : '👥 ') + (t.type === 'private' ? 'Your Telegram chat' : t.title);
+      const b = document.createElement('button'); b.className = 'ghost small'; b.type = 'button'; b.textContent = 'Remove';
+      b.onclick = async () => { me = await api('/api/telegram/unlink', { chatId: t.chatId }); renderMe(); };
+      d.append(s, b); c.append(d);
+    });
+    const n = me.telegram.length;
+    $('tgPill').textContent = n ? 'Connected' : 'Not connected';
+    $('tgPill').className = 'pill' + (n ? ' on' : '');
+    const hasPrivate = me.telegram.some((t) => t.type === 'private');
+    $('connectTg').hidden = hasPrivate || !cfg.botUsername;
+    $('addGroup').hidden = !cfg.botUsername;
+    $('tgSub').textContent = n ? 'Live transcripts, balance alerts and voicemails go here.'
+      : 'Connect your Telegram to get a live transcript of every call, plus balance alerts and voicemails.';
+
+    const num = me.number;
+    $('numHas').hidden = !num; $('numNone').hidden = !!num;
+    if (num) {
+      $('numPretty').textContent = num.pretty;
+      const due = new Date(num.paidUntil).toLocaleDateString();
+      $('numStatus').textContent = num.status === 'past_due' ? 'Renewal due' : 'Yours';
+      $('numStatus').className = 'pill' + (num.status === 'past_due' ? '' : ' on');
+      $('numRenew').textContent = cfg.numberMonthlyFeeCents
+        ? (num.status === 'past_due' ? `Top up to keep it — ${money(cfg.numberMonthlyFeeCents)} renewal was due ${due}.` : `Renews ${due} for ${money(cfg.numberMonthlyFeeCents)} from your balance.`)
+        : '';
+    } else {
+      $('numFee').textContent = cfg.numberMonthlyFeeCents ? ` (${money(cfg.numberMonthlyFeeCents)}/month from your balance)` : '';
+      if (document.activeElement !== $('areaCode')) $('areaCode').value = me.areaCode || '';
+    }
+    updateCallButton();
+  }
+  function showSignedIn() { renderMe(); loadHistory(); loadLedger(); }
+
+  $('areaCode').addEventListener('change', async () => {
+    try { me = await api('/api/me', { areaCode: $('areaCode').value }); renderMe(); $('callMsg').textContent = ''; }
+    catch (err) { $('callMsg').className = 'msg err'; $('callMsg').textContent = err.message; }
+  });
+  $('editName').onclick = async () => {
+    const name = prompt('Who should calls say they are from?', me.callerName);
+    if (name && name.trim()) { me = await api('/api/me', { callerName: name }); renderMe(); }
+  };
+
+  // ----- cost estimate & the call button -----
+  function estimate() {
+    const words = $('script').value.split(/\s+/).filter(Boolean).length;
+    const secs = Math.ceil(words / 2.5) + 4 + (parseInt($('listen').value, 10) || 0) + 3;
+    const mins = Math.max(1, Math.ceil(secs / 60));
+    const numFee = me && cfg.dedicatedNumbers && (!me.number || me.number.status === 'past_due') ? cfg.numberMonthlyFeeCents : 0;
+    return { words, mins, numFee, needed: mins * cfg.pricePerMinuteCents + numFee };
+  }
+  function needsTopUp() { return !!me && (me.balanceCents || 0) < estimate().needed; }
+  function updateCallButton() {
+    const e = estimate();
+    $('est').textContent = e.words ? `≈ ${e.mins} min · ${money(e.mins * cfg.pricePerMinuteCents)}` + (e.numFee ? ` + ${money(e.numFee)} number` : '') : '';
+    const go = $('go'), lock = $('goLock');
+    if (!me) {
+      go.textContent = IN_TG ? '🍔 Place call' : '🍔 Place call'; go.className = '';
+      lock.hidden = false; lock.textContent = '🔒 Create an account and top up to place calls — your script is kept.';
+    } else if (needsTopUp()) {
+      go.textContent = '💰 Top up to call'; go.className = 'gold';
+      lock.hidden = false;
+      lock.textContent = (me.balanceCents || 0) === 0
+        ? `🔒 Calls unlock once your balance is topped up (from ${money(cfg.minTopupCents)}).`
+        : `🔒 This call needs about ${money(e.needed)} — your balance is ${money(me.balanceCents)}.`;
+    } else {
+      go.textContent = '🍔 Place call'; go.className = ''; lock.hidden = true;
+    }
+  }
+  $('script').addEventListener('input', () => { $('n').textContent = $('script').value.length; updateCallButton(); });
+  $('listen').addEventListener('input', updateCallButton);
+
+  // ----- Top up -----
+  function renderFunds() {
+    $('tuRate').textContent = money(cfg.pricePerMinuteCents);
+    $('heroRate').textContent = `${money(cfg.pricePerMinuteCents)} a minute, loaded with crypto.`;
+    $('customAmt').min = cfg.minTopupCents / 100; $('customAmt').max = cfg.maxTopupCents / 100;
+    const a = $('amounts'); a.innerHTML = '';
+    cfg.topupPresetsCents.forEach((c, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = money(c).replace('.00', '');
+      b.onclick = () => { selAmt = c; $('customAmt').value = ''; markSel(); };
+      b.dataset.c = c; a.append(b);
+      if (i === 0 && selAmt === null) selAmt = c;
+    });
+    const p = $('provs'); p.innerHTML = '';
+    if (!cfg.providers.length) { p.innerHTML = '<div class="empty">Crypto payments aren\'t set up yet.</div>'; $('payBtn').disabled = true; }
+    cfg.providers.forEach((pr, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.k = pr.key;
+      b.innerHTML = `${pr.short}<small></small>`; b.querySelector('small').textContent = pr.label;
+      b.onclick = () => { selProv = pr.key; markSel(); };
+      p.append(b);
+      if (i === 0 && !selProv) selProv = pr.key;
+    });
+    markSel();
+  }
+  function markSel() {
+    document.querySelectorAll('#amounts button').forEach((b) => b.classList.toggle('sel', +b.dataset.c === selAmt && !$('customAmt').value));
+    document.querySelectorAll('#provs button').forEach((b) => b.classList.toggle('sel', b.dataset.k === selProv));
+    const c = currentAmount();
+    $('payBtn').textContent = c ? `Check out ${money(c)} with crypto` : 'Check out';
+    $('solPay').hidden = true; // a changed amount or method needs a fresh payment request
+  }
+  const currentAmount = () => ($('customAmt').value ? Math.round(parseFloat($('customAmt').value) * 100) : selAmt);
+  $('customAmt').addEventListener('input', markSel);
+
+  function openTopup(reason) {
+    if (!me) return openAuth('Create an account or sign in to top up — your script is saved.', 'topup');
+    $('tuReason').innerHTML = '';
+    $('tuReason').append(reason || 'Load your balance with crypto. Calls are ');
+    if (!reason) { const b = document.createElement('b'); b.textContent = money(cfg.pricePerMinuteCents); $('tuReason').append(b, '/min.'); }
+    $('payMsg').textContent = '';
+    loadLedger(); openModal('topupView');
+  }
+  $('topupBtn').onclick = () => openTopup();
+  $('hdrBal').onclick = () => openTopup();
+
+  async function startPay() {
+    const msg = $('payMsg'); msg.className = 'msg'; msg.textContent = '';
+    const cents = currentAmount();
+    if (!cents || cents < cfg.minTopupCents || cents > cfg.maxTopupCents) {
+      msg.className = 'msg err'; msg.textContent = `Enter between ${money(cfg.minTopupCents)} and ${money(cfg.maxTopupCents)}.`; return;
+    }
+    $('payBtn').disabled = true;
+    try {
+      saveDraft();
+      const r = await api('/api/topup', { amountCents: cents, provider: selProv });
+      if (r.kind === 'solana' || r.kind === 'bitcoin') {
+        // Direct-to-wallet: show the QR and wallet button, then watch the blockchain for the payment.
+        const isBtc = r.kind === 'bitcoin';
+        $('solPay').classList.toggle('btc', isBtc);
+        $('solUnit').textContent = isBtc ? 'BTC' : 'USDC';
+        $('solNet').textContent = isBtc ? '' : 'on Solana';
+        $('solScan').textContent = isBtc ? 'Scan with any Bitcoin wallet, or tap below on this device.' : 'Scan with Phantom on your phone, or tap below on this device.';
+        $('solOpen').textContent = isBtc ? '₿ Open in wallet' : '👻 Open in Phantom';
+        $('amtRow').hidden = !isBtc;
+        $('solAmt2').textContent = r.amount;
+        $('amtCopy').textContent = 'Copy';
+        $('amtCopy').onclick = () => { navigator.clipboard && navigator.clipboard.writeText(r.amount); $('amtCopy').textContent = 'Copied'; };
+        $('solCopy').textContent = 'Copy';
+        $('solNote').textContent = isBtc
+          ? `Send this exact amount within ${r.expiresInMinutes} minutes — the exact amount is how we match your payment. Your balance updates after 1 confirmation (usually 10–30 min). Make sure the amount received is exact: if your wallet subtracts the fee from it, it won't match.`
+          : "Use the QR or button so the payment is matched to you automatically. If you send manually, your balance won't update by itself.";
+        $('solAmt').textContent = r.amount;
+        $('solQr').src = r.qr;
+        $('solAddr').textContent = r.address;
+        $('solOpen').href = r.url;
+        $('solOpen').onclick = (e) => { if (IN_TG) { e.preventDefault(); TG.openLink(r.url); } };
+        $('solCopy').onclick = () => { navigator.clipboard && navigator.clipboard.writeText(r.address); $('solCopy').textContent = 'Copied'; };
+        $('solPay').hidden = false;
+        $('payBtn').disabled = false;
+        watchTopup(r.id);
+        return;
+      }
+      if (IN_TG) {
+        // Inside Telegram, checkout opens in the browser; this screen waits for the payment.
+        TG.openLink(r.url);
+        watchTopup(r.id);
+        $('payBtn').disabled = false;
+      } else {
+        msg.className = 'msg ok'; msg.textContent = 'Opening secure crypto checkout…';
+        location.href = r.url;
+      }
+    } catch (err) { msg.className = 'msg err'; msg.textContent = err.message; $('payBtn').disabled = false; }
+  }
+  $('payBtn').onclick = startPay;
+
+  async function loadLedger() {
+    if (!me) return;
+    const rows = await api('/api/ledger').catch(() => []);
+    const l = $('ledger'); l.innerHTML = '';
+    rows.slice(0, 6).forEach((r) => {
+      const d = document.createElement('div');
+      const a = document.createElement('span'); a.textContent = `${r.note} · ${new Date(r.at).toLocaleDateString()}`;
+      const b = document.createElement('span'); b.textContent = (r.cents > 0 ? '+' : '') + money(r.cents); if (r.cents > 0) b.className = 'plus';
+      d.append(a, b); l.append(d);
+    });
+  }
+
+  // Wait for a crypto payment to confirm on-chain, then refresh the balance.
+  function watchTopup(id) {
+    const msg = $('payMsg');
+    msg.className = 'msg'; msg.textContent = 'Waiting for your crypto payment to confirm… you can keep using the app.';
+    const started = Date.now();
+    const tick = async () => {
+      try {
+        const t = await api('/api/topup/' + encodeURIComponent(id));
+        if (t.status === 'paid') {
+          $('solPay').hidden = true;
+          me = await api('/api/me'); renderMe(); loadLedger();
+          msg.className = 'msg ok'; msg.textContent = `${money(t.creditedCents)} added — you're ready to call 🎉`;
+          showBanner(`💰 ${money(t.creditedCents)} added to your balance. You're ready to call.`);
+          return;
+        }
+        if (['failed', 'expired', 'refunded'].includes(t.status)) { $('solPay').hidden = true; msg.className = 'msg err'; msg.textContent = 'That payment did not go through.'; return; }
+        if (t.status === 'needs_review') { msg.className = 'msg err'; msg.textContent = "We received a payment that didn't match the amount. We're reviewing it and will credit you shortly."; return; }
+        if (t.status === 'confirming') msg.textContent = 'Payment seen on the blockchain — waiting for confirmations…';
+      } catch {}
+      if (Date.now() - started < 60 * 60 * 1000) setTimeout(tick, 5000);
+      else msg.textContent = "Still confirming. Your balance updates automatically and you'll get a Telegram message.";
+    };
+    tick();
+  }
+  function showBanner(text) { $('bannerText').textContent = text; $('banner').hidden = false; }
+
+  // ----- Connect Telegram (private chat) or a group -----
+  async function linkTelegram(kind) {
+    $('tgMsg').className = 'msg'; $('tgMsg').textContent = '';
+    try {
+      const l = await api('/api/telegram/link', {});
+      const url = kind === 'group' ? l.group : l.personal;
+      $('linkGroup').href = url;
+      $('linkGroup').textContent = kind === 'group' ? 'Pick a group in Telegram →' : 'Open Telegram and press Start →';
+      $('linkNote').textContent = (kind === 'group' ? 'Your whole team will see the transcripts. ' : '') + 'The link expires in 15 minutes.';
+      $('linkBox').hidden = false;
+      if (IN_TG) TG.openTelegramLink(url); else window.open(url, '_blank');
+      const before = me.telegram.length, started = Date.now();
+      clearInterval(linkPoll);
+      linkPoll = setInterval(async () => {
+        me = await api('/api/me'); renderMe();
+        if (me.telegram.length > before) {
+          clearInterval(linkPoll); $('linkBox').hidden = true;
+          $('tgMsg').className = 'msg ok'; $('tgMsg').textContent = 'Telegram connected 🎉';
+        } else if (Date.now() - started > 15 * 60 * 1000) clearInterval(linkPoll);
+      }, 2500);
+    } catch (err) { $('tgMsg').className = 'msg err'; $('tgMsg').textContent = err.message; }
+  }
+  $('connectTg').onclick = () => linkTelegram('personal');
+  $('addGroup').onclick = () => linkTelegram('group');
+
+  // ----- calls -----
+  let currentCall = null, liveClock = null;
+  const fmtSecs = (s) => `${Math.floor(s / 60)}:${String(Math.max(0, s) % 60).padStart(2, '0')}`;
+
+  // Draw the conversation (finished lines + words still being spoken) into a container.
+  function drawTranscript(el, rec) {
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+    el.innerHTML = '';
+    if (rec.purged) { el.innerHTML = '<div class="empty">This conversation was deleted (kept for 1 hour after the call). The transcript and recording are in your Telegram.</div>'; return; }
+    const lines = rec.transcript.map((l) => ({ ...l }));
+    if (rec.partial && rec.partial.caller) lines.push({ speaker: 'Caller (bot)', text: rec.partial.caller, partial: true });
+    if (rec.partial && rec.partial.recipient) lines.push({ speaker: 'Recipient', text: rec.partial.recipient, partial: true });
+    if (!lines.length) {
+      el.innerHTML = `<div class="empty">${DONE.includes(rec.status) ? 'No speech was captured on this call.' : rec.status === 'in-progress' ? 'Listening…' : 'Waiting for them to pick up…'}</div>`;
+      return;
+    }
+    lines.forEach((l) => {
+      const d = document.createElement('div');
+      d.className = 'line' + (l.speaker === 'Recipient' ? ' rec' : '') + (l.partial ? ' partial' : '');
+      const b = document.createElement('b'); b.textContent = l.speaker + (l.partial ? ' · speaking…' : '');
+      d.append(b, document.createTextNode(l.text)); el.append(d);
+    });
+    if (atBottom || !DONE.includes(rec.status)) el.scrollTop = el.scrollHeight;
+  }
+
+  function renderCall(rec) {
+    currentCall = rec;
+    const live = !DONE.includes(rec.status);
+    const s = $('status');
+    s.textContent = LABEL[rec.status] || rec.status;
+    s.className = 'pill' + (rec.status === 'in-progress' ? ' live' : '');
+    $('liveBtn').hidden = rec.purged;
+    $('liveBtn').textContent = live ? '🔴 Live call' : '📄 Open';
+    drawTranscript($('tx'), rec);
+
+    // Live call screen
+    $('liveTo').textContent = rec.to;
+    $('liveTitle').textContent = live ? 'Live call' : 'Call ended';
+    $('liveDot').className = 'dot' + (rec.status === 'in-progress' ? ' on' : '');
+    $('liveStatus').textContent = LABEL[rec.status] || rec.status;
+    $('liveStatus').className = 'pill' + (rec.status === 'in-progress' ? ' live' : '');
+    $('liveRec').hidden = !rec.recorded;
+    drawTranscript($('liveTx'), rec);
+    tickClock();
+    let note = '';
+    if (rec.deleteAt) {
+      const mins = Math.max(0, Math.ceil((Date.parse(rec.deleteAt) - Date.now()) / 60000));
+      note = `🗑 Deleted from the app in ${mins} min.` + (rec.recorded ? ' The recording was sent to your Telegram.' : ' The transcript stays in your Telegram.');
+    } else if (live) {
+      note = rec.recorded ? 'Each line also goes to your Telegram as it’s said, and the recording arrives after the call.' : 'Each line also goes to your Telegram as it’s said.';
+    }
+    $('liveNote').textContent = note;
+  }
+
+  function tickClock() {
+    const rec = currentCall;
+    if (!rec) return;
+    let secs = 0;
+    if (rec.durationSeconds != null) secs = rec.durationSeconds;
+    else if (rec.answeredAt) secs = Math.floor((Date.now() - Date.parse(rec.answeredAt)) / 1000);
+    $('liveTimer').textContent = fmtSecs(secs);
+  }
+  function openLive() { if (currentCall) { renderCall(currentCall); openModal('liveView'); } }
+  $('liveBtn').onclick = openLive;
+
+  function watch(sid, { open = false } = {}) {
+    clearInterval(pollTimer); clearInterval(liveClock);
+    liveClock = setInterval(tickClock, 1000);
+    let first = true;
+    const tick = async () => {
+      try {
+        const rec = await api('/api/calls/' + sid);
+        renderCall(rec);
+        if (first && open) openModal('liveView');
+        first = false;
+        if (DONE.includes(rec.status)) {
+          clearInterval(pollTimer); clearInterval(liveClock); loadHistory();
+          if (me) { me = await api('/api/me'); renderMe(); loadLedger(); }
+          // Keep the deletion countdown fresh, then clear the screen when it's gone.
+          if (!rec.purged && rec.deleteAt) pollTimer = setInterval(async () => {
+            try { const r = await api('/api/calls/' + sid); renderCall(r); if (r.purged) clearInterval(pollTimer); } catch {}
+          }, 30000);
+        }
+      } catch {}
+    };
+    tick(); pollTimer = setInterval(tick, 1000);
+  }
+  async function loadHistory() {
+    const h = $('history');
+    if (!me) { h.innerHTML = '<div class="empty" style="cursor:default;border:0">Sign in to see your calls.</div>'; return; }
+    const list = await api('/api/calls').catch(() => []);
+    h.innerHTML = '';
+    if (!list.length) { h.innerHTML = '<div class="empty" style="cursor:default;border:0">No calls yet.</div>'; return; }
+    list.forEach((c, i) => {
+      const d = document.createElement('div');
+      if (i === 0) d.style.borderTop = '0';
+      const a = document.createElement('span'); a.textContent = `${c.to} · ${c.voice} · ${new Date(c.createdAt).toLocaleString()}`;
+      const b = document.createElement('span'); b.textContent = LABEL[c.status] || c.status;
+      d.append(a, b); d.onclick = () => watch(c.sid); h.append(d);
+    });
+    // Coming back to the app: show the most recent conversation if it's still being kept.
+    if (!currentCall && list[0] && !list[0].purged) watch(list[0].sid);
+  }
+
+  async function placeCall() {
+    const msg = $('callMsg'); msg.className = 'msg'; msg.textContent = '';
+    if (needsTopUp()) return openTopup(`Top up to place this call — it needs about ${money(estimate().needed)}.`);
+    if (!$('consent').checked) { msg.className = 'msg err'; msg.textContent = 'Confirm the person agreed to receive this call.'; return; }
+    $('go').disabled = true;
+    try {
+      const data = await api('/api/call', {
+        to: $('to').value.trim(), script: $('script').value,
+        voice: document.querySelector('input[name=voice]:checked').value,
+        listenSeconds: $('listen').value, consent: $('consent').checked,
+      });
+      $('consent').checked = false;
+      currentCall = { sid: data.sid };
+      watch(data.sid, { open: true }); loadHistory();
+      me = await api('/api/me'); renderMe();
+      msg.className = 'msg ok'; msg.textContent = `Calling… (up to ${data.maxMinutes} min on your balance)`;
+    } catch (err) {
+      if (err.status === 401) { me = null; token = null; return openAuth('Your session ended. Sign in to place this call — your script is saved.', 'call', 'signin'); }
+      if (err.data && err.data.needsFunds) return openTopup(err.message);
+      msg.className = 'msg err'; msg.textContent = err.message;
+    } finally { $('go').disabled = false; }
+  }
+
+  $('callForm').onsubmit = (e) => {
+    e.preventDefault();
+    saveDraft();
+    if (!$('to').value.trim() || !$('script').value.trim()) {
+      $('callMsg').className = 'msg err'; $('callMsg').textContent = 'Add a phone number and a script first.'; return;
+    }
+    if (!me) {
+      return openAuth('Create an account to place this call — your script is saved.', 'call');
+    }
+    placeCall();
+  };
+
+  // ----- start -----
+  (async () => {
+    loadDraft();
+    if (IN_TG) {
+      TG.ready(); TG.expand();
+      try { TG.setHeaderColor('#14110f'); TG.setBackgroundColor('#14110f'); } catch {}
+    }
+    cfg = Object.assign(cfg, await api('/api/config').catch(() => ({})));
+    renderFunds();
+
+    // Inside Telegram: sign in silently with the data Telegram hands the Mini App.
+    if (IN_TG) {
+      try { setSession(await api('/api/auth/telegram', { initData: TG.initData })); }
+      catch (err) { showBanner('Could not sign you in through Telegram. Close and reopen the app.'); }
+    } else {
+      try { me = await api('/api/me'); } catch { me = null; token = null; }
+    }
+    showSignedIn();
+
+    const q = new URLSearchParams(location.search);
+    const tp = q.get('topup'), open = q.get('open'), signin = q.get('signin');
+    if (tp || open || signin) history.replaceState(null, '', '/');
+    if (signin === 'telegram' && !me) openTelegramAuth(open || '');
+    if (open === 'call' && me) continueAfterAuth('call');
+    if (tp === 'canceled') showBanner('Payment canceled — no funds were added.');
+    else if (tp && me) { openTopup(); watchTopup(tp); }
+    else if (tp && !me) showBanner('Thanks! Your payment is confirming. Head back to Telegram — your balance updates there automatically.');
+    if (open === 'topup' && me) openTopup();
+  })();
+</script>
+</body>
+</html>

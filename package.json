@@ -1,0 +1,23 @@
+{
+  "name": "call-a-burger",
+  "version": "1.0.0",
+  "description": "Call a Burger: scripted outbound calls with male/female voice and live transcripts streamed to each user's Telegram",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@solana/pay": "^0.2.6",
+    "@solana/web3.js": "^1.99.0",
+    "bech32": "^2.0.0",
+    "bignumber.js": "^11.1.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "qrcode": "^1.5.4",
+    "stripe": "^17.7.0",
+    "twilio": "^5.3.0"
+  }
+}
